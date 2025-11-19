@@ -10,7 +10,6 @@ def banner():
     print("-" * 65)
     print("\nHi and welcome to my directory enumeration tool based on python\n")
     print("-" * 65)
-    time.sleep(1)
 
 def format_url(link: str) -> str:
     if not link.startswith("http://"):
@@ -53,12 +52,14 @@ def main():
 
     args = parser.parse_args()
 
+    banner()
+    time.sleep(1)
+    fixed_url = format_url(args.u)
+    check_server(fixed_url)
+
     with open(args.w, "r") as l:
         words = [line.strip() for line in l if line.strip()]
 
-    banner()
-    fixed_url = format_url(args.u)
-    check_server(fixed_url)
     scan(fixed_url, words)
 
 
