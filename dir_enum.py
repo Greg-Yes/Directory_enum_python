@@ -1,5 +1,6 @@
 import requests
 import time
+import argparse
 
 
 HEADERS = {"User-Agent": "Mozilla/5.0 (Xll; Linux x86_64)"}
@@ -39,21 +40,26 @@ def scan(url: str, wordlist: str):
             session = s.get(url, timeout=TIMEOUT)
             if session.status_code == 200:
                 print(f"[+] Found: {word}")
-            else:
-                print(f"[-]Not found: {word}")
     except KeyboardInterrupt:
         print("Closing...")
     print("\nScan completed")
 
 
 def main():
-    url = "testphp.vulnweb.com"
-    word_list = ["index", "login", "help", "faq", "testing3289759", "5454354665743"]
+    parser = argparse.ArgumentParser(description="Simple python directory enumeration tool")
     
+    parser.add_argument("-u", help="Target url or IP address. e.g. http://example.com")
+    parser.add_argument("-w", help="Path to wordlist")
+
+    args = parser.parse_args()
+
+    with open(args.w, "r") as l:
+        words = [line.strip() for line in l if line.strip()]
+
     banner()
-    fixed_url = format_url(url)
+    fixed_url = format_url(args.u)
     check_server(fixed_url)
-    scan(fixed_url, word_list)
+    scan(fixed_url, words)
 
 
 if __name__ == "__main__":
