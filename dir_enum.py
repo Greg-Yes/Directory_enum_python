@@ -36,13 +36,28 @@ def check_server(link: str):
 
 def scan(url: str, wordlist: str):
     s = requests.Session()
-    try:
-        for word in wordlist:
-            session = s.get(url, timeout=TIMEOUT)
-            if session.status_code == 200:
+    baseline = s.get(url).content
+    baseline_size = len(baseline)
+
+    for word in wordlist:
+        try:
+            session = s.get(url, timeout=TIMEOUT, allow_redirects=True)
+            size = len(session.content)
+
+            if abs(size - baseline_size) < 50:
+                continue
+
+            if session.status_code in (200, 301, 302, 404):
                 print(f"[+] Found: {word}")
-    except KeyboardInterrupt:
-        print("Closing...")
+
+                if session.status_code == 403:
+                    print("Forbidden: {word} - Very interesting")
+
+        except requests.exceptions.RequestException:
+            pass
+        except KeyboardInterrupt:
+            print("Closing...")
+
     print("\nScan completed")
 
 
@@ -64,14 +79,17 @@ def main():
         words = [line.strip() for line in l if line.strip()]
     
     threads = []
-    for _ in range(args.t):
-        t = threading.Thread(target=scan, args=(fixed_url, words))
-        t.daemon = True
-        t.start()
-        threads.append(t)
+    try:
+        for _ in range(args.t):
+            t = threading.Thread(target=scan, args=(fixed_url, words))
+            t.daemon = True
+            t.start()
+            threads.append(t)
     
-    for t in threads:
-        t.join()
+        for t in threads:
+            t.join()
+    except KeyboardInterrupt:
+        print("Closing...")
     
 
 if __name__ == "__main__":
