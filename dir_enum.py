@@ -1,6 +1,8 @@
 import requests
 import time
 import argparse
+import threading
+#from queue import Queue
 
 
 HEADERS = {"User-Agent": "Mozilla/5.0 (Xll; Linux x86_64)"}
@@ -47,8 +49,9 @@ def scan(url: str, wordlist: str):
 def main():
     parser = argparse.ArgumentParser(description="Simple python directory enumeration tool")
     
-    parser.add_argument("-u", help="Target url or IP address. e.g. http://example.com")
-    parser.add_argument("-w", help="Path to wordlist")
+    parser.add_argument("-u", help="Target url or IP address. e.g. http://example.com", required=True)
+    parser.add_argument("-w", help="Path to wordlist", required=True)
+    parser.add_argument("-t", help="Number of threads (default: 10)", type=int, default=10)
 
     args = parser.parse_args()
 
@@ -59,9 +62,17 @@ def main():
 
     with open(args.w, "r") as l:
         words = [line.strip() for line in l if line.strip()]
-
-    scan(fixed_url, words)
-
+    
+    threads = []
+    for _ in range(args.t):
+        t = threading.Thread(target=scan, args=(fixed_url, words))
+        t.daemon = True
+        t.start()
+        threads.append(t)
+    
+    for t in threads:
+        t.join()
+    
 
 if __name__ == "__main__":
     main()
